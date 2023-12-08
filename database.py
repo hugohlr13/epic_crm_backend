@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from Models.models import Base
+from models.models import Base
 
 # Database connection URL. In this case, we are using SQLite.
 DATABASE_URL = "sqlite:///epic_events_crm.db"

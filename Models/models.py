@@ -1,22 +1,12 @@
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, declarative_base
+import bcrypt
 
 Base = declarative_base()
 
 class Client(Base):
     """
     Represents a client in the CRM system.
-    
-    Attributes:
-        id (int): Unique identifier for the client.
-        nom_complet (str): Full name of the client.
-        email (str): Email address of the client.
-        telephone (str): Phone number of the client.
-        nom_entreprise (str): Name of the client's company.
-        date_creation (date): Date when the client was first contacted.
-        derniere_mise_a_jour (date): Date of the last update or contact.
-        contact_commercial (str): Name of the associated commercial contact.
     """
     __tablename__ = 'clients'
     id = Column(Integer, primary_key=True)
@@ -33,15 +23,6 @@ class Client(Base):
 class Contrat(Base):
     """
     Represents a contract in the CRM system.
-    
-    Attributes:
-        id (int): Unique identifier for the contract.
-        client_id (int): Reference to the associated client.
-        contact_commercial (str): Name of the commercial contact for the contract.
-        montant_total (float): Total amount of the contract.
-        montant_restant (float): Remaining amount to be paid.
-        date_creation (date): Creation date of the contract.
-        statut (str): Status of the contract (e.g., signed or not).
     """
     __tablename__ = 'contrats'
     id = Column(Integer, primary_key=True)
@@ -58,16 +39,6 @@ class Contrat(Base):
 class Evenement(Base):
     """
     Represents an event in the CRM system.
-    
-    Attributes:
-        id (int): Unique identifier for the event.
-        contrat_id (int): Reference to the associated contract.
-        date_debut (datetime): Start date and time of the event.
-        date_fin (datetime): End date and time of the event.
-        contact_support (str): Name of the support contact responsible for the event.
-        lieu (str): Location of the event.
-        nombre_participants (int): Number of participants.
-        notes (str): Additional details about the event.
     """
     __tablename__ = 'evenements'
     id = Column(Integer, primary_key=True)
@@ -80,3 +51,37 @@ class Evenement(Base):
     notes = Column(String)
     # Relations
     contrat = relationship("Contrat", back_populates="evenements")
+
+class Role(Base):
+    """
+    Represents a role in the CRM system.
+    """
+    __tablename__ = 'roles'
+    id = Column(Integer, primary_key=True)
+    nom = Column(String, nullable=False)
+    permissions = Column(String)
+    # Relations
+    utilisateurs = relationship("Utilisateur", back_populates="role") #easier for SQL Requet : User with Role A
+
+
+class Utilisateur(Base):
+    """
+    Represents a user in the CRM system.
+    """
+    __tablename__ = 'utilisateurs'
+    id = Column(Integer, primary_key=True)
+    numero_employe = Column(Integer, unique=True, nullable=False)
+    nom = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    departement = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    role_id = Column(Integer, ForeignKey('roles.id'))
+    # Relations
+    role = relationship("Role")
+
+    def set_password(self, password):
+        self.hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.checkpw(password.encode('utf-8'), self.hashed_password.encode('utf-8'))
+
